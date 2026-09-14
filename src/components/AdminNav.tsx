@@ -20,7 +20,7 @@ export function AdminNav() {
         <Link
           key={l.href}
           href={l.href}
-          className={`rounded-md px-2 py-1 ${
+          className={`rounded-md px-2 py-1 text-sm ${
             pathname === l.href
               ? "bg-zinc-100 font-medium dark:bg-zinc-800"
               : "text-zinc-600 hover:underline dark:text-zinc-300"

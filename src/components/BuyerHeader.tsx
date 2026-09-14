@@ -16,7 +16,10 @@ export function BuyerHeaderRight() {
         href="/cart"
         className="rounded-md border border-zinc-300 px-3 py-1.5 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
       >
-        Cart · {count} item{count === 1 ? "" : "s"} · {cartTotal(lines)} pts
+        <span className="sm:hidden">Cart ({count}) · {cartTotal(lines)} pts</span>
+        <span className="hidden sm:inline">
+          Cart · {count} item{count === 1 ? "" : "s"} · {cartTotal(lines)} pts
+        </span>
       </Link>
       <Button
         variant="ghost"
@@ -25,7 +28,8 @@ export function BuyerHeaderRight() {
           router.push("/");
         }}
       >
-        Switch group
+        <span className="sm:hidden">Switch</span>
+        <span className="hidden sm:inline">Switch group</span>
       </Button>
     </>
   );

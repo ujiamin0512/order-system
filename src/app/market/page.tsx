@@ -27,7 +27,7 @@ export default function MarketPage() {
       {loading ? (
         <p className="text-sm text-zinc-500">Loading products…</p>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
           {products.map((p) => {
             const avail = availability[p.id];
             const qty = cartQty(lines, p.id);
@@ -35,47 +35,41 @@ export default function MarketPage() {
             const groupMaxed = avail?.group_remaining !== null && avail?.group_remaining !== undefined && avail.group_remaining <= 0;
             const blocked = soldOut || groupMaxed;
             return (
-              <Card key={p.id} className="flex flex-col gap-3">
-                <ProductImage src={p.image_url} alt={p.name} className="aspect-[4/3] w-full rounded-md" />
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="font-medium">{p.name}</h3>
-                    <p className="text-lg font-semibold">{p.points} pts</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    {p.is_rental && <Badge tone="warn">Rent for {p.rental_minutes} minutes</Badge>}
-                    {p.max_per_group !== null && (
-                      <Badge>Max {p.max_per_group} per group</Badge>
-                    )}
-                    {p.global_inventory !== null && (
-                      <Badge tone={soldOut ? "bad" : "neutral"}>
-                        {soldOut
-                          ? "Out of stock"
-                          : `${avail?.global_remaining ?? p.global_inventory} left`}
-                      </Badge>
-                    )}
-                    {groupMaxed && !soldOut && <Badge tone="bad">Group limit reached</Badge>}
-                  </div>
+              <Card key={p.id} className="flex flex-col gap-2 p-3 sm:p-4">
+                <ProductImage src={p.image_url} alt={p.name} className="aspect-square w-full rounded-md sm:aspect-[4/3]" />
+                <div className="flex items-baseline justify-between gap-2">
+                  <h3 className="min-w-0 text-sm font-medium leading-tight sm:text-base">{p.name}</h3>
+                  <p className="shrink-0 font-semibold">{p.points} pts</p>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {p.is_rental && <Badge tone="warn">Rent for {p.rental_minutes} minutes</Badge>}
+                  {p.max_per_group !== null && <Badge>Max {p.max_per_group} per group</Badge>}
+                  {p.global_inventory !== null && (
+                    <Badge tone={soldOut ? "bad" : "neutral"}>
+                      {soldOut ? "Out of stock" : `${avail?.global_remaining ?? p.global_inventory} left`}
+                    </Badge>
+                  )}
+                  {groupMaxed && !soldOut && <Badge tone="bad">Group limit reached</Badge>}
                 </div>
 
-                <div className="mt-auto flex items-center justify-between">
+                <div className="mt-auto flex items-center justify-between gap-2 pt-1">
                   {qty === 0 ? (
-                    <Button onClick={() => change(p, 1)} disabled={blocked}>
+                    <Button className="w-full" onClick={() => change(p, 1)} disabled={blocked}>
                       Add to cart
                     </Button>
                   ) : (
-                    <div className="flex items-center gap-2">
-                      <Button variant="secondary" onClick={() => change(p, -1)} aria-label="Decrease">
-                        −
-                      </Button>
-                      <span className="w-8 text-center font-medium">{qty}</span>
-                      <Button variant="secondary" onClick={() => change(p, 1)} aria-label="Increase">
-                        +
-                      </Button>
-                    </div>
-                  )}
-                  {qty > 0 && (
-                    <span className="text-sm text-zinc-500">{qty * p.points} pts</span>
+                    <>
+                      <div className="flex items-center gap-1">
+                        <Button variant="secondary" onClick={() => change(p, -1)} aria-label="Decrease">
+                          −
+                        </Button>
+                        <span className="w-7 text-center font-medium">{qty}</span>
+                        <Button variant="secondary" onClick={() => change(p, 1)} aria-label="Increase">
+                          +
+                        </Button>
+                      </div>
+                      <span className="text-xs text-zinc-500 sm:text-sm">{qty * p.points} pts</span>
+                    </>
                   )}
                 </div>
                 <ErrorText>{itemErrors[p.id]}</ErrorText>

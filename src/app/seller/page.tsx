@@ -5,7 +5,14 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import type { Group, Order, OrderStatus } from "@/lib/types";
 import { ORDER_STATUSES } from "@/lib/types";
-import { Badge, Button, Card, ErrorText, Shell, statusTone } from "@/components/Shell";
+import {
+  Badge,
+  Button,
+  Card,
+  ErrorText,
+  Shell,
+  statusTone,
+} from "@/components/Shell";
 
 export default function SellerPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -17,7 +24,10 @@ export default function SellerPage() {
   const load = useCallback(async () => {
     const supabase = createClient();
     const [o, g] = await Promise.all([
-      supabase.from("order_orders").select("*").order("created_at", { ascending: false }),
+      supabase
+        .from("order_orders")
+        .select("*")
+        .order("created_at", { ascending: false }),
       supabase.from("order_groups").select("*"),
     ]);
     if (o.error) return setError(o.error.message);
@@ -31,7 +41,11 @@ export default function SellerPage() {
     const supabase = createClient();
     const channel = supabase
       .channel("orders-feed")
-      .on("postgres_changes", { event: "*", schema: "public", table: "order_orders" }, () => load())
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "order_orders" },
+        () => load(),
+      )
       .subscribe((status: string) => setLive(status === "SUBSCRIBED"));
     return () => {
       supabase.removeChannel(channel);
@@ -39,23 +53,32 @@ export default function SellerPage() {
   }, [load]);
 
   const setStatus = async (id: string, status: OrderStatus) => {
-    const { error } = await createClient().from("order_orders").update({ status }).eq("id", id);
+    const { error } = await createClient()
+      .from("order_orders")
+      .update({ status })
+      .eq("id", id);
     if (error) setError(error.message);
     else load();
   };
 
-  const visible = filter === "all" ? orders : orders.filter((o) => o.status === filter);
+  const visible =
+    filter === "all" ? orders : orders.filter((o) => o.status === filter);
   const byGroup = new Map<string, Order[]>();
-  for (const o of visible) byGroup.set(o.group_id, [...(byGroup.get(o.group_id) ?? []), o]);
+  for (const o of visible)
+    byGroup.set(o.group_id, [...(byGroup.get(o.group_id) ?? []), o]);
   const groupIds = [...byGroup.keys()].sort((a, b) =>
-    (groups[a]?.name ?? "").localeCompare(groups[b]?.name ?? "", undefined, { numeric: true }),
+    (groups[a]?.name ?? "").localeCompare(groups[b]?.name ?? "", undefined, {
+      numeric: true,
+    }),
   );
 
   return (
     <Shell
       title="Seller dashboard"
       right={
-        <Badge tone={live ? "good" : "warn"}>{live ? "Live" : "Connecting…"}</Badge>
+        <Badge tone={live ? "good" : "warn"}>
+          {live ? "Live" : "Connecting…"}
+        </Badge>
       }
     >
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -67,7 +90,9 @@ export default function SellerPage() {
           >
             {s === "all" ? "All" : cap(s)}{" "}
             <span className="ml-1 opacity-60">
-              {s === "all" ? orders.length : orders.filter((o) => o.status === s).length}
+              {s === "all"
+                ? orders.length
+                : orders.filter((o) => o.status === s).length}
             </span>
           </Button>
         ))}
@@ -80,21 +105,35 @@ export default function SellerPage() {
         <div className="space-y-6">
           {groupIds.map((gid) => (
             <section key={gid}>
-              <h2 className="mb-2 text-lg font-semibold">{groups[gid]?.name ?? "Unknown group"}</h2>
+              <h2 className="mb-2 text-lg font-semibold">
+                {groups[gid]?.name ?? "Unknown group"}
+              </h2>
               <div className="space-y-2">
                 {byGroup.get(gid)!.map((o) => (
-                  <Card key={o.id} className="flex flex-wrap items-center justify-between gap-3">
-                    <Link href={`/seller/${o.id}`} className="flex items-center gap-3 hover:underline">
-                      <span className="font-mono text-xs text-zinc-400">#{o.id.slice(0, 8)}</span>
+                  <Card
+                    key={o.id}
+                    className="flex flex-wrap items-center justify-between gap-3"
+                  >
+                    <Link
+                      href={`/seller/${o.id}`}
+                      className="flex flex-wrap items-center gap-x-3 gap-y-1 hover:underline"
+                    >
+                      <span className="font-mono text-xs text-zinc-400">
+                        #{o.id.slice(0, 8)}
+                      </span>
                       <span className="font-medium">{o.total_points} pts</span>
                       <span className="text-xs text-zinc-500">
                         {new Date(o.created_at).toLocaleTimeString()}
                       </span>
                     </Link>
-                    <div className="flex items-center gap-2">
+                    <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                       <Badge tone={statusTone(o.status)}>{cap(o.status)}</Badge>
                       {ORDER_STATUSES.filter((s) => s !== o.status).map((s) => (
-                        <Button key={s} variant="secondary" onClick={() => setStatus(o.id, s)}>
+                        <Button
+                          key={s}
+                          variant="secondary"
+                          onClick={() => setStatus(o.id, s)}
+                        >
                           {cap(s)}
                         </Button>
                       ))}

@@ -13,7 +13,7 @@ export function Shell({
   return (
     <div className="flex min-h-full flex-col">
       <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
           <div className="flex items-center gap-3">
             <Link href="/" className="font-semibold tracking-tight">
               Craft Market
@@ -21,10 +21,10 @@ export function Shell({
             <span className="text-zinc-400">/</span>
             <span className="text-sm text-zinc-600 dark:text-zinc-300">{title}</span>
           </div>
-          <div className="flex items-center gap-3 text-sm">{right}</div>
+          <div className="flex flex-wrap items-center gap-2 text-sm">{right}</div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-4 sm:py-6">{children}</main>
     </div>
   );
 }
@@ -85,6 +85,11 @@ export function Badge({
       {children}
     </span>
   );
+}
+
+/** Horizontal-scroll wrapper so wide tables never stretch the page on phones. */
+export function TableWrap({ children }: { children: ReactNode }) {
+  return <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">{children}</div>;
 }
 
 export function ErrorText({ children }: { children: ReactNode }) {

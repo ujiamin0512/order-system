@@ -91,8 +91,8 @@ export default function CartPage() {
                 );
                 return (
                   <Card key={l.product.id} className="space-y-2">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
                         <ProductImage
                           src={l.product.image_url}
                           alt=""
@@ -105,7 +105,7 @@ export default function CartPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
                         <Button
                           variant="secondary"
                           onClick={() => setQuantity(l.product, l.quantity - 1)}
