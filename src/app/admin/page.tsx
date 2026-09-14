@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { GroupSpend } from "@/lib/types";
 import { Button, Card, ErrorText, Input, Shell, TableWrap } from "@/components/Shell";
@@ -15,24 +15,16 @@ export default function AdminAnalyticsPage() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [bulk, setBulk] = useState("");
 
+  const load = useCallback(async () => {
+    const { data, error } = await createClient()
+      .from("order_group_spend")
+      .select("*");
+    if (error) setError(error.message);
+    else setRows((data ?? []) as GroupSpend[]);
+  }, []);
+
   useEffect(() => {
     const supabase = createClient();
-    const load = () =>
-      supabase
-        .from("order_group_spend")
-        .select("*")
-        .then(
-          ({
-            data,
-            error,
-          }: {
-            data: GroupSpend[] | null;
-            error: { message: string } | null;
-          }) => {
-            if (error) setError(error.message);
-            else setRows(data ?? []);
-          },
-        );
     load();
     const ch = supabase
       .channel("admin-orders")
@@ -45,7 +37,7 @@ export default function AdminAnalyticsPage() {
     return () => {
       supabase.removeChannel(ch);
     };
-  }, []);
+  }, [load]);
 
   const resetAll = async () => {
     if (
@@ -69,24 +61,23 @@ export default function AdminAnalyticsPage() {
     if (!Number.isInteger(n) || n < 0) return setError("Points must be a whole number ≥ 0");
     setSavingId(groupId);
     setError(null);
-    const { error } = await createClient()
+    const { data, error } = await createClient()
       .from("order_groups")
       .update({ points_balance: n })
-      .eq("id", groupId);
+      .eq("id", groupId)
+      .select("id");
     if (error) setError(error.message);
+    else if (!data || data.length === 0)
+      setError(
+        "Save was rejected by the database (0 rows updated). Make sure your account has role = admin in order_profiles and that migrate_group_points.sql has been run.",
+      );
     else {
       setDrafts((d) => {
         const next = { ...d };
         delete next[groupId];
         return next;
       });
-      setRows((rs) =>
-        rs.map((r) =>
-          r.group_id === groupId
-            ? { ...r, points_balance: n, points_remaining: n - r.points_spent }
-            : r,
-        ),
-      );
+      await load();
     }
     setSavingId(null);
   };
@@ -96,15 +87,18 @@ export default function AdminAnalyticsPage() {
     if (!Number.isInteger(n) || n < 0) return setError("Points must be a whole number ≥ 0");
     if (!window.confirm(`Set every group's points to ${n}?`)) return;
     setError(null);
-    const { error } = await createClient()
+    const { data, error } = await createClient()
       .from("order_groups")
       .update({ points_balance: n })
-      .gte("created_at", "1970-01-01");
+      .gte("created_at", "1970-01-01")
+      .select("id");
     if (error) setError(error.message);
+    else if (!data || data.length === 0)
+      setError("Save was rejected by the database (0 rows updated). Check your admin role.");
     else {
       setBulk("");
       setDrafts({});
-      setRows((rs) => rs.map((r) => ({ ...r, points_balance: n, points_remaining: n - r.points_spent })));
+      await load();
     }
   };
 
@@ -147,6 +141,9 @@ export default function AdminAnalyticsPage() {
         <Stat label="Total orders" value={totalOrders} />
       </div>
       <Card>
+        <div className="mb-2">
+          <ErrorText>{error}</ErrorText>
+        </div>
         <TableWrap>
           <table className="w-full min-w-[560px] text-sm">
             <thead className="text-left text-xs uppercase text-zinc-500">
