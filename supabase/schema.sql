@@ -187,8 +187,9 @@ drop policy if exists "orders: public read" on public.order_orders;
 create policy "orders: public read" on public.order_orders for select using (true);
 drop policy if exists "orders: public status update" on public.order_orders;
 create policy "orders: public status update" on public.order_orders for update using (true) with check (true);
-drop policy if exists "orders: admin delete" on public.order_orders;
-create policy "orders: admin delete" on public.order_orders for delete using (public.is_admin());
+-- Sellers (no login) can delete orders from their dashboard; admins reset via the same path.
+drop policy if exists "orders: public delete" on public.order_orders;
+create policy "orders: public delete" on public.order_orders for delete using (true);
 
 drop policy if exists "order_items: public read" on public.order_order_items;
 create policy "order_items: public read" on public.order_order_items for select using (true);

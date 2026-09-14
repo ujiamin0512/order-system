@@ -20,6 +20,8 @@ export default function SellerPage() {
   const [filter, setFilter] = useState<OrderStatus | "all">("all");
   const [error, setError] = useState<string | null>(null);
   const [live, setLive] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     const supabase = createClient();
@@ -61,8 +63,30 @@ export default function SellerPage() {
     else load();
   };
 
+  const toggle = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const deleteSelected = async () => {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    if (!window.confirm(`Delete ${ids.length} order${ids.length === 1 ? "" : "s"}? This cannot be undone.`)) return;
+    setDeleting(true);
+    setError(null);
+    const { error } = await createClient().from("order_orders").delete().in("id", ids);
+    if (error) setError(error.message);
+    else setSelected(new Set());
+    setDeleting(false);
+    load();
+  };
+
   const visible =
     filter === "all" ? orders : orders.filter((o) => o.status === filter);
+  const allVisibleSelected = visible.length > 0 && visible.every((o) => selected.has(o.id));
   const byGroup = new Map<string, Order[]>();
   for (const o of visible)
     byGroup.set(o.group_id, [...(byGroup.get(o.group_id) ?? []), o]);
@@ -97,6 +121,27 @@ export default function SellerPage() {
           </Button>
         ))}
       </div>
+      {visible.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={allVisibleSelected}
+              onChange={(e) =>
+                setSelected(e.target.checked ? new Set(visible.map((o) => o.id)) : new Set())
+              }
+            />
+            Select all shown
+          </label>
+          <Button
+            variant="danger"
+            onClick={deleteSelected}
+            disabled={selected.size === 0 || deleting}
+          >
+            {deleting ? "Deleting…" : `Delete selected (${selected.size})`}
+          </Button>
+        </div>
+      )}
       <ErrorText>{error}</ErrorText>
 
       {groupIds.length === 0 ? (
@@ -112,11 +157,20 @@ export default function SellerPage() {
                 {byGroup.get(gid)!.map((o) => (
                   <Card
                     key={o.id}
-                    className="flex flex-wrap items-center justify-between gap-3"
+                    className={`flex flex-wrap items-center justify-between gap-3 ${
+                      selected.has(o.id) ? "ring-2 ring-red-400" : ""
+                    }`}
                   >
+                    <input
+                      type="checkbox"
+                      aria-label="Select order"
+                      checked={selected.has(o.id)}
+                      onChange={() => toggle(o.id)}
+                      className="h-4 w-4"
+                    />
                     <Link
                       href={`/seller/${o.id}`}
-                      className="flex flex-wrap items-center gap-x-3 gap-y-1 hover:underline"
+                      className="flex flex-1 flex-wrap items-center gap-x-3 gap-y-1 hover:underline"
                     >
                       <span className="font-mono text-xs text-zinc-400">
                         #{o.id.slice(0, 8)}
