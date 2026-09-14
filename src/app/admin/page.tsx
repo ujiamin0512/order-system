@@ -137,13 +137,18 @@ export default function AdminAnalyticsPage() {
             Apply
           </Button>
         </div>
-        <Button
-          variant="danger"
-          onClick={resetAll}
+        <div className="flex items-center gap-2">
+          <a href="/board" target="_blank" rel="noreferrer">
+            <Button variant="secondary">Projector view</Button>
+          </a>
+          <Button
+            variant="danger"
+            onClick={resetAll}
           disabled={resetting || totalOrders === 0}
         >
-          {resetting ? "Resetting…" : "Reset all group points"}
-        </Button>
+            {resetting ? "Resetting…" : "Reset all group points"}
+          </Button>
+        </div>
       </div>
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Stat label="Total points spent" value={totalPoints} />
