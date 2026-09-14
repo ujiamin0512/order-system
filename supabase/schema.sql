@@ -15,6 +15,7 @@ create table if not exists public.order_profiles (
 create table if not exists public.order_groups (
   id uuid primary key default gen_random_uuid(),
   name text not null unique,
+  points_balance integer not null default 0 check (points_balance >= 0),
   created_at timestamptz not null default now()
 );
 
@@ -155,10 +156,12 @@ create or replace view public.order_group_spend with (security_invoker = true) a
   select g.id as group_id, g.name as group_name,
          coalesce(sum(o.total_points), 0)::int as points_spent,
          count(o.id)::int as order_count,
-         count(o.id) filter (where o.status <> 'completed')::int as active_orders
+         count(o.id) filter (where o.status <> 'completed')::int as active_orders,
+         g.points_balance,
+         (g.points_balance - coalesce(sum(o.total_points), 0))::int as points_remaining
   from public.order_groups g
   left join public.order_orders o on o.group_id = g.id
-  group by g.id, g.name
+  group by g.id, g.name, g.points_balance
   order by g.name;
 
 -- ---------- Row Level Security ----------

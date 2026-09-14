@@ -6,6 +6,7 @@ export const ORDER_STATUSES: OrderStatus[] = ["received", "processing", "complet
 export interface Group {
   id: string;
   name: string;
+  points_balance: number;
   created_at: string;
 }
 
@@ -49,4 +50,6 @@ export interface GroupSpend {
   points_spent: number;
   order_count: number;
   active_orders: number;
+  points_balance: number;
+  points_remaining: number;
 }
