@@ -7,6 +7,15 @@ import { Button, Card, ErrorText, Input, Shell, TableWrap } from "@/components/S
 import { AdminNav } from "@/components/AdminNav";
 import { AccessLinks } from "@/components/AccessLinks";
 
+/** Accepts "12", "12.5", "12,5"; returns a non-negative number rounded to 2 dp, or null if invalid. */
+function parsePoints(value: string): number | null {
+  const n = Number(value.trim().replace(",", "."));
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.round(n * 100) / 100;
+}
+
+const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/0$/, ""));
+
 export default function AdminAnalyticsPage() {
   const [rows, setRows] = useState<GroupSpend[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -57,8 +66,8 @@ export default function AdminAnalyticsPage() {
   };
 
   const saveBalance = async (groupId: string, value: string) => {
-    const n = Number(value);
-    if (!Number.isInteger(n) || n < 0) return setError("Points must be a whole number ≥ 0");
+    const n = parsePoints(value);
+    if (n === null) return setError("Points must be a number ≥ 0 (up to 2 decimals)");
     setSavingId(groupId);
     setError(null);
     const { data, error } = await createClient()
@@ -83,8 +92,8 @@ export default function AdminAnalyticsPage() {
   };
 
   const setAllBalances = async () => {
-    const n = Number(bulk);
-    if (!Number.isInteger(n) || n < 0) return setError("Points must be a whole number ≥ 0");
+    const n = parsePoints(bulk);
+    if (n === null) return setError("Points must be a number ≥ 0 (up to 2 decimals)");
     if (!window.confirm(`Set every group's points to ${n}?`)) return;
     setError(null);
     const { data, error } = await createClient()
@@ -118,6 +127,7 @@ export default function AdminAnalyticsPage() {
           <Input
             type="number"
             min={0}
+            step="0.01"
             placeholder="e.g. 100"
             value={bulk}
             onChange={(e) => setBulk(e.target.value)}
@@ -168,7 +178,8 @@ export default function AdminAnalyticsPage() {
                       <Input
                         type="number"
                         min={0}
-                        value={drafts[r.group_id] ?? String(r.points_balance)}
+                        step="0.01"
+                        value={drafts[r.group_id] ?? fmt(Number(r.points_balance))}
                         onChange={(e) =>
                           setDrafts((d) => ({ ...d, [r.group_id]: e.target.value }))
                         }
@@ -178,7 +189,7 @@ export default function AdminAnalyticsPage() {
                         className="w-24 text-right"
                       />
                       {drafts[r.group_id] !== undefined &&
-                        drafts[r.group_id] !== String(r.points_balance) && (
+                        drafts[r.group_id] !== fmt(Number(r.points_balance)) && (
                           <Button
                             onClick={() => saveBalance(r.group_id, drafts[r.group_id])}
                             disabled={savingId === r.group_id}
@@ -196,7 +207,7 @@ export default function AdminAnalyticsPage() {
                       r.points_remaining < 0 ? "text-red-600" : ""
                     }`}
                   >
-                    {r.points_remaining}
+                    {fmt(Number(r.points_remaining))}
                   </td>
                   <td className="py-2 text-right">{r.active_orders}</td>
                   <td className="py-2 text-right">{r.order_count}</td>
